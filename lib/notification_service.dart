@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 // ignore: depend_on_referenced_packages
@@ -42,10 +44,62 @@ class NotificationService {
       ),
       iOS: DarwinNotificationDetails(
           // presentSound: false,
-          //TODO ios bildirim sesi kurulumu yapılmadı!
           //sound: "su_sesi.mp3",
           ),
     );
+  }
+
+  Future showSheduleMinuteNotification({
+    required int id,
+    required String? title,
+    required String? body,
+    required String? payLoad,
+    required Time sheduleTime,
+    required DateTime finishTime,
+  }) async {
+    return notificationsPlugin.zonedSchedule(
+      id,
+      title,
+      body,
+      tz.TZDateTime.now(tz.local).add(const Duration(seconds: 10)),
+      //await _sheduledMinute(sheduleTime, finishTime),
+      await notificationDetails(),
+      payload: payLoad,
+      // ignore: deprecated_member_use
+      androidAllowWhileIdle: true,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      matchDateTimeComponents: DateTimeComponents.time,
+    );
+  }
+
+  static Future<tz.TZDateTime> _sheduledMinute(
+    Time time,
+    DateTime finishTime,
+  ) async {
+    setLocalLocation(detroit);
+    final now = tz.TZDateTime.now(tz.local);
+    final sheduledTime = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      now.hour,
+      time.minute,
+      time.second,
+    );
+
+    // print("test now time $now");
+    // print("test shedued time $sheduledTime");
+
+    if (now.isBefore(finishTime)) {
+      final scheduledMinute = DateTime.now().minute;
+      return sheduledTime.isBefore(now)
+          ? now.add(const Duration(seconds: 10))
+          : sheduledTime.add(const Duration(seconds: 10));
+    } else {
+      return tz.TZDateTime(tz.local, 2500, 1, 1, 0, 0, 0);
+    }
   }
 
   Future showNotification({
@@ -62,26 +116,26 @@ class NotificationService {
     );
   }
 
-  Future showSheduleNotification({
-    required int id,
-    required String? title,
-    required String? body,
-    required String? payLoad,
-    required DateTime sheduleTime,
-  }) async {
-    return notificationsPlugin.zonedSchedule(
-      id,
-      title,
-      body,
-      tz.TZDateTime.from(sheduleTime, tz.local),
-      await notificationDetails(),
-      payload: payLoad,
-      // ignore: deprecated_member_use
-      androidAllowWhileIdle: true,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-    );
-  }
+  // Future showSheduleNotification({
+  //   required int id,
+  //   required String? title,
+  //   required String? body,
+  //   required String? payLoad,
+  //   required DateTime sheduleTime,
+  // }) async {
+  //   return notificationsPlugin.zonedSchedule(
+  //     id,
+  //     title,
+  //     body,
+  //     tz.TZDateTime.from(sheduleTime, tz.local),
+  //     await notificationDetails(),
+  //     payload: payLoad,
+  //     // ignore: deprecated_member_use
+  //     androidAllowWhileIdle: true,
+  //     uiLocalNotificationDateInterpretation:
+  //         UILocalNotificationDateInterpretation.absoluteTime,
+  //   );
+  // }
 
   Future showSheduleDailyNotification({
     required int id,
@@ -89,7 +143,7 @@ class NotificationService {
     required String? body,
     required String? payLoad,
     required Time sheduleTime,
-    required Time finishTime,
+    required DateTime finishTime,
   }) async {
     return notificationsPlugin.zonedSchedule(
       id,
@@ -108,7 +162,7 @@ class NotificationService {
 
   static Future<tz.TZDateTime> _sheduledDaily(
     Time time,
-    Time finishTime,
+    DateTime finishTime,
   ) async {
     setLocalLocation(detroit);
     final now = tz.TZDateTime.now(tz.local);
@@ -123,9 +177,9 @@ class NotificationService {
     );
     final finish = tz.TZDateTime(
       tz.local,
-      now.year,
-      now.month,
-      now.day,
+      finishTime.year,
+      finishTime.month,
+      finishTime.day,
       finishTime.hour,
       finishTime.minute,
       finishTime.second,
@@ -153,46 +207,45 @@ class NotificationService {
         : delete;
   }
 
-  Future showSheduleWeeklyNotification({
-    required int id,
-    required String? title,
-    required String? body,
-    required String? payLoad,
-    required Time sheduleTime,
-    required Time finishTime,
-    required List<int> days,
-  }) async {
-    return notificationsPlugin.zonedSchedule(
-      id,
-      title,
-      body,
-      await _sheduledWeekly(sheduleTime, finishTime, days),
-      await notificationDetails(),
-      payload: payLoad,
-      // ignore: deprecated_member_use
-      androidAllowWhileIdle: true,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
-    );
-  }
+  // Future showSheduleWeeklyNotification({
+  //   required int id,
+  //   required String? title,
+  //   required String? body,
+  //   required String? payLoad,
+  //   required Time sheduleTime,
+  //   required DateTime finishTime,
+  //   required List<int> days,
+  // }) async {
+  //   return notificationsPlugin.zonedSchedule(
+  //     id,
+  //     title,
+  //     body,
+  //     await _sheduledWeekly(sheduleTime, finishTime, days),
+  //     await notificationDetails(),
+  //     payload: payLoad,
+  //     // ignore: deprecated_member_use
+  //     androidAllowWhileIdle: true,
+  //     uiLocalNotificationDateInterpretation:
+  //         UILocalNotificationDateInterpretation.absoluteTime,
+  //     matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+  //   );
+  // }
 
-  static Future<tz.TZDateTime> _sheduledWeekly(
-    Time time,
-    Time finish,
-    List<int> days,
-  ) async {
-    //TODO finish time normal time giridim deneme yapıyorum düzelecek
-    tz.TZDateTime sheduleDate = await _sheduledDaily(time, finish);
+  // static Future<tz.TZDateTime> _sheduledWeekly(
+  //   Time time,
+  //   DateTime finish,
+  //   List<int> days,
+  // ) async {
+  //   tz.TZDateTime sheduleDate = await _sheduledDaily(time, finish);
 
-    while (!days.contains(sheduleDate.weekday)) {
-      sheduleDate = sheduleDate.add(const Duration(days: 1));
-    }
+  //   while (!days.contains(sheduleDate.weekday)) {
+  //     sheduleDate = sheduleDate.add(const Duration(days: 1));
+  //   }
 
-    //print("test shedued time $sheduleDate");
+  //   //print("test shedued time $sheduleDate");
 
-    return sheduleDate;
-  }
+  //   return sheduleDate;
+  // }
 
   //Etkin bildirimleri alma
   Future<List<ActiveNotification>> activeNotifications() async {
